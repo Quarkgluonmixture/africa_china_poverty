@@ -1,64 +1,61 @@
-## Using publicly available satellite imagery and deep learning to understand economic well-being in Africa
+# AI for Sustainable Development: Poverty Prediction from Satellite Imagery
 
-This repository includes the code and data necessary to reproduce the results and figures for the article "Using publicly available satellite imagery and deep learning to understand economic well-being in Africa" published in *Nature Communications* on May 22, 2020 ([link](https://www.nature.com/articles/s41467-020-16185-w)).
+> **Coursework 2 Submission** | UCL
+> **Student:** [Your Name/Student ID]
+> **Module:** AI for Sustainable Development
 
-Please cite this article as follows, or use the BibTeX entry below.
+## 📌 Project Overview
+This project is a reproduction and extension of the seminal paper *"Combining satellite imagery and machine learning to predict poverty"* (Jean et al., 2016).
 
-> Yeh, C., Perez, A., Driscoll, A. *et al*. Using publicly available satellite imagery and deep learning to understand economic well-being in Africa. *Nat Commun* **11**, 2583 (2020). https://doi.org/10.1038/s41467-020-16185-w
+The goal is to predict economic well-being using high-resolution satellite imagery. This repository contains:
+1.  **Replication:** A faithful reproduction of the baseline methodology using DHS data from 5 African countries (Nigeria, Tanzania, Uganda, Malawi, Rwanda).
+2.  **Adaptation (Methodology):** Upgrading the CNN backbone from the original **VGG-F** to a deeper, residual-based **ResNet-18** to improve feature extraction capabilities.
+3.  **Adaptation (Context):** Applying the trained model to a new geographic context: **Guizhou, China**, to analyze its ability to distinguish between "Policy-driven Poverty Alleviation" (e.g., relocation sites) and "Organic Economic Growth".
 
-```tex
-@article{yeh2020using,
-    author = {Yeh, Christopher and Perez, Anthony and Driscoll, Anne and Azzari, George and Tang, Zhongyi and Lobell, David and Ermon, Stefano and Burke, Marshall},
-    day = {22},
-    doi = {10.1038/s41467-020-16185-w},
-    issn = {2041-1723},
-    journal = {Nature Communications},
-    month = {5},
-    number = {1},
-    title = {{Using publicly available satellite imagery and deep learning to understand economic well-being in Africa}},
-    url = {https://www.nature.com/articles/s41467-020-16185-w},
-    volume = {11},
-    year = {2020}
-}
-```
+## 🛠️ Key Features
+* **ResNet-18 Implementation:** A custom TensorFlow 1.15 implementation of ResNet-18 (`models/models_resnet.py`).
+* **China Dataset:** A curated dataset of 20 locations in Guizhou, China, including adversarial samples for robustness testing (`china_coordinates.csv`).
+* **Explainability:** Saliency map generation to visualize model attention (`visualize_saliency.py`).
 
+## 💻 Installation & Setup
 
-## Hardware and Software Requirements
-
-This code was tested on a system with the following specifications:
-
-- operating system: Ubuntu 16.04.6 LTS
-- CPU: Intel Xeon Silver 4110
-- memory (RAM): 125GB
-- disk storage: 500GB
-- GPU: 1x NVIDIA Titan Xp
-
-The main software requirements are Python 3.7 with TensorFlow r1.15, and R 3.6. The complete list of required packages and library are listed in the `env.yml` file, which is meant to be used with `conda` (version 4.8.3). See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/) for instructions on installing conda via Miniconda. Once conda is installed, run the following command to set up the conda environment:
+This project uses **TensorFlow 1.15** and **Python 3.7**.
 
 ```bash
+# 1. Clone the repository
+git clone https://github.com/Quarkgluonmixture/africa_china_poverty.git
+cd africa_china_poverty
+
+# 2. Create Conda Environment
 conda env create -f env.yml
+conda activate poverty_env
+
+# 3. Authenticate Google Earth Engine
+earthengine authenticate
 ```
 
-If you are using a GPU, you may need to also install CUDA 10 and cuDNN 7.
+## 🚀 How to Run
 
+### 1. Test Model Architecture
+Verify that the ResNet-18 model is built correctly:
 
-## Data Preparation Instructions
+```bash
+python test_resnet18.py
+```
 
-1. **Export satellite images from Google Earth Engine.** Follow the instructions in the `download/export_ee_images.ipynb` notebook.
-2. **Process the satellite images.** Follow the instructions in the `preprocessing/process_tfrecords_dhs.ipynb` and `preprocessing/process_tfrecords_lsms.ipynb` notebooks. Then run the `preprocessing/analyze_tfrecords_dhs.ipynb` and `preprocessing/analyze_tfrecords_lsms.ipynb` notebooks.
-3. **Prepare the data files.** Follow the instructions in the `data_analysis/dhs.ipynb` and `data_analysis/lsms.ipynb` notebooks.
+### 2. Run Inference on China Data
+Test the forward pass on the curated Chinese satellite images:
 
+```bash
+python test_china_inference_flow.py
+```
 
-## Model Training Instructions
+### 3. Generate Saliency Maps
+Visualize what the model "sees":
 
-1. **Run the baseline linear models.** Follow the instructions in `models/dhs_baselines.ipynb`, `models/lsms_baselines.ipynb`, , and `models/lsmsdelta_baselines.ipynb`.
-2. **Train the convolutional neural network models.** If running this code on a SLURM-enabled computing cluster, run the scripts `train_directly_runner.py` and `train_directly_lsm_runner.py`. Otherwise, run `train_directly.py` and `train_delta.py` with the desired command-line arguments to set hyperparameters.
-3. **Extract learned feature representations.** Run the scripts `extract_features_dhs.py` and `extract_features_lsmsdelta.py`.
-4. **Run cross-validated ridge-regression.** Follow the instructions in `models/dhs_ridge_resnet.ipynb` and `model_analysis/lsmsdelta_resnet.ipynb`.
+```bash
+python visualize_saliency.py
+```
 
-
-## To reproduce figs:
-
-All necessary scripts should be in code_figs, and all necessary data should be in data. We included data of the summary stats for plotting, since the full microdata cannot be released. A few changes have been made to data and code to fix errors in plots. Code has been updated to fix an artificially inflated revisit rate for DigitalGlobe in Figure 1. Changes were made to the data on survey frequency used for Figure 1.
-
-For the maximally-activating activation maps, see the `model_analysis/max_activating.ipynb` notebook.
+---
+*Note: This repository is for academic assessment purposes.*
