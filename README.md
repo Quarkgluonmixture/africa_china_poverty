@@ -17,6 +17,10 @@ The goal is to predict economic well-being using high-resolution satellite image
 * **China Dataset:** A curated dataset of 20 locations in Guizhou, China, including adversarial samples for robustness testing (`china_coordinates.csv`).
 * **Explainability:** Saliency map generation to visualize model attention (`visualize_saliency.py`).
 
+### 🔍 Model Explainability Preview
+An example of Saliency Map generation on Guizhou satellite imagery (Untrained Baseline):
+![Saliency Map](images/saliency_test.png)
+
 ## 💻 Installation & Setup
 
 This project uses **TensorFlow 1.15** and **Python 3.7**.
