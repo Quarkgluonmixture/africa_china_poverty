@@ -1,0 +1,15 @@
+# Virtual Environment
+poverty_env/
+.conda/
+
+# Large Data Files (DHS, Satellite Downloads)
+data/
+china_images/
+china_dataset_final/
+*.tfrecord
+
+# Checkpoints and Logs
+checkpoints/
+logs/
+__pycache__/
+*.ipynb_checkpoints
