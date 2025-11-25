@@ -16,7 +16,7 @@ from scipy.ndimage import gaussian_filter
 import sys
 
 # Add the models directory to the Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'africa_poverty'))
+sys.path.append(os.path.dirname(__file__))
 
 # Import ResNet18 model
 from models.models_resnet import ResNet18
@@ -108,7 +108,16 @@ def visualize_saliency(original_image, saliency_map, save_path='saliency_test.pn
         save_path: str, path to save the visualization
     """
     # Apply Gaussian Blur to make it look like a heat map
-    saliency_map_smoothed = gaussian_filter(saliency_map, sigma=5)
+    # 1. Slightly enhance contrast (optional)
+    saliency_map = np.power(saliency_map, 2)
+    
+    # 2. Apply stronger Gaussian blur
+    # Larger sigma values result in more blur and smoothing.
+    # Try adjusting from 3 to 8-10 until the grid pattern disappears
+    saliency_map_smoothed = gaussian_filter(saliency_map, sigma=10)
+    
+    # 3. Normalize to [0, 1] range
+    saliency_map_smoothed = (saliency_map_smoothed - saliency_map_smoothed.min()) / (saliency_map_smoothed.max() - saliency_map_smoothed.min())
     
     # Create a figure with three subplots
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 6))
@@ -152,10 +161,10 @@ def main():
     tf.compat.v1.disable_eager_execution()
     
     # Directory containing Chinese satellite images
-    china_images_dir = os.path.join(os.path.dirname(__file__), 'africa_poverty', 'china_dataset_final')
+    china_images_dir = os.path.join(os.path.dirname(__file__), 'china_dataset_final')
     
     # Create output directory for saliency maps
-    output_dir = os.path.join(os.path.dirname(__file__), 'africa_poverty', 'saliency_maps')
+    output_dir = os.path.join(os.path.dirname(__file__), 'saliency_maps')
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
         print(f"Created output directory: {output_dir}")
@@ -226,9 +235,9 @@ def main():
                     saliency_map = compute_saliency_map(sess, processed_image, X, output_tensor)
                     print(f"Saliency map computed successfully. Shape: {saliency_map.shape}")
                     
-                    # Apply Gaussian smoothing
-                    saliency_map_smoothed = gaussian_filter(saliency_map, sigma=5)
-                    print(f"Applied Gaussian smoothing with sigma=5")
+                    # Apply Gaussian smoothing with enhanced contrast and normalization
+                    # Note: The actual processing is done in visualize_saliency function
+                    print("Saliency map will be processed with enhanced contrast, stronger blur, and normalization")
                     
                     # Create output filename (remove .jpg extension and add _saliency.png)
                     output_filename = os.path.splitext(image_file)[0] + '_saliency.png'

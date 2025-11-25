@@ -1,0 +1,25 @@
+# Core Machine Learning
+tensorflow==1.15.0
+numpy
+scikit-learn
+scipy
+
+# Data Processing
+pandas
+geopandas
+pyreadstat
+shapely
+
+# Image Processing
+Pillow
+matplotlib
+seaborn
+
+# Geospatial & Network
+earthengine-api
+requests
+
+# Utilities & Interface
+tqdm
+flask
+jupyter
