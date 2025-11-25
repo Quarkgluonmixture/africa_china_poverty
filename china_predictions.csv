@@ -1,0 +1,21 @@
+Image Name,True Label,Predicted Wealth Index,Location Name
+0_Bijie_Haique_Forest.jpg,0,0.16542068,Bijie_Haique_Forest
+0_Congjiang_Basha_Village.jpg,0,0.6104882,Congjiang_Basha_Village
+0_Dafang_Pudi_Azalea.jpg,0,1.3246503,Dafang_Pudi_Azalea
+0_Danzhai_Shiqiao_Paper.jpg,0,0.9494734,Danzhai_Shiqiao_Paper
+0_Kaili_Matang_Gejia.jpg,0,1.5778021,Kaili_Matang_Gejia
+0_Leishan_Langde_Upper.jpg,0,1.0557227,Leishan_Langde_Upper
+0_Liping_Zhaoxing_Dong.jpg,0,1.1764712,Liping_Zhaoxing_Dong
+0_Qianxi_Huawu_Relocation.jpg,0,0.9218547,Qianxi_Huawu_Relocation
+0_Ziyun_Zhongdong_Cave.jpg,0,0.6776768,Ziyun_Zhongdong_Cave
+0_Zunyi_Caowangba_Canal.jpg,0,0.71851575,Zunyi_Caowangba_Canal
+1_Guiyang_Airport.jpg,1,1.9000208,Guiyang_Airport
+1_Guiyang_Future_Ark.jpg,1,1.8946912,Guiyang_Future_Ark
+1_Guiyang_GIFC_CBD.jpg,1,1.994171,Guiyang_GIFC_CBD
+1_Guiyang_Gov_Center.jpg,1,1.9664398,Guiyang_Gov_Center
+1_Guiyang_Huaguoyuan_WhiteHouse.jpg,1,2.2937136,Guiyang_Huaguoyuan_WhiteHouse
+1_Guiyang_Hunter_Mall.jpg,1,2.6503632,Guiyang_Hunter_Mall
+1_Guiyang_Jiaxiu_Skyline.jpg,1,2.7109678,Guiyang_Jiaxiu_Skyline
+1_Guiyang_North_Station.jpg,1,2.065643,Guiyang_North_Station
+1_Zunyi_Conference_Commercial.jpg,1,2.4170742,Zunyi_Conference_Commercial
+1_Zunyi_HighSpeed_NewTown.jpg,1,2.3991718,Zunyi_HighSpeed_NewTown

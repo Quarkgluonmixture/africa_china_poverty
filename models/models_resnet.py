@@ -7,7 +7,7 @@ import tensorflow as tf
 from models.base_model import BaseModel
 
 # Constants for ResNet implementation
-BN_DECAY = 0.99
+BN_DECAY = 0.9
 CONV_WEIGHT_STDDEV = 0.1
 FC_WEIGHT_STDDEV = 0.01
 DEFAULT_DTYPE = tf.float32
@@ -108,10 +108,13 @@ class ResNet18(BaseModel):
             # Global average pooling
             features_layer = tf.reduce_mean(x, axis=[1, 2], name='global_avg_pool')
             
+            # Dropout layer after global average pooling
+            x = tf.layers.dropout(features_layer, rate=0.5, training=is_training, name='dropout_layer')
+            
             # Fully connected layer for classification/regression
             if num_classes is not None:
                 with tf.variable_scope('fc'):
-                    x = self._fully_connected(features_layer, num_classes, reg=fc_reg, name='fc1')
+                    x = self._fully_connected(x, num_classes, reg=fc_reg, name='fc1')
             
             return x, features_layer
     
