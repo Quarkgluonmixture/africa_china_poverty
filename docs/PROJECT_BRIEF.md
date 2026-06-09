@@ -13,6 +13,20 @@
 > the [Fact Sheet](#fact-sheet--事实清单); if unsure, speak qualitatively. Do not
 > overclaim production scale or real-world deployment — this is a rigorous
 > research project, not a shipped product.
+>
+> **Claims discipline (do NOT reintroduce these) / 措辞红线（不得复活）:**
+> - Pretraining does **not** "double" accuracy. From-scratch ResNet-50 reaches
+>   r²=0.615 vs pretrained 0.651 — a **modest** gap; the real benefit is faster
+>   convergence (best epoch 14 vs 51). Quote epochs, not invented multipliers
+>   (no "~10×"). 预训练**不**翻倍精度；优势主要在收敛速度，用 epoch 数说话，别用编造的倍数。
+> - From-scratch did **not** "barely learn" — 0.615 is a solid result. 从零**不是**学不动。
+> - Transfer is **architecture-insensitive**: do NOT say one backbone transfers
+>   better. The single-seed "1.49 vs 1.13" did **not** replicate (paired Δgap CI
+>   includes 0). Only "transfer is robust (both gaps' CIs clear of 0)" and
+>   "ConvNeXt is better *in-domain*" are supported. 迁移对架构不敏感；"1.49 vs 1.13"未复现，
+>   不得说某个 backbone 迁移更好。
+> - For quantitative transfer claims use the **multi-seed CIs**, not single-seed
+>   point values (those are illustrative only). 定量主张一律用多 seed CI，单 seed 数字仅作举例。
 
 ---
 
@@ -43,15 +57,16 @@ test r²≈0.69，并且无需重训就能迁移到我自建的中国农村对�
 **EN:** Predicting poverty from space is a sustainable-development problem: ground
 surveys are expensive, satellites are free. I trained ImageNet-pretrained
 backbones (ResNet-50, ConvNeXt, ViT) to regress the DHS wealth index over five
-African countries, and ran an ablation showing transfer learning more than
-doubles performance versus from-scratch on ~2k images. Then I stress-tested
+African countries, and ran an ablation showing transfer learning mainly buys
+much faster convergence (plus a modest accuracy gain) on ~2k images. Then I
+stress-tested
 generalization with a purpose-built dataset of 20 Guizhou locations — including
 cave dwellings invisible to optical sensors and resettlement villages that mimic
 suburbs — and used Grad-CAM to confirm the model keys on built-up structures.
 
 **中文:** "从太空看贫困"是个可持续发展问题：地面调查昂贵，卫星影像免费。我用 ImageNet 预训练
-的 backbone（ResNet-50、ConvNeXt、ViT）回归非洲五国的 DHS 财富指数，并通过消融实验证明：
-在仅 ~2k 张图上，迁移学习比从零训练性能翻倍以上。随后我用自建的 20 个贵州地点数据集压力测试
+的 backbone（ResNet-50、ConvNeXt、ViT）回归非洲五国的 DHS 财富指数，并通过消融实验表明：
+在仅 ~2k 张图上，迁移学习主要带来更快的收敛（外加小幅精度提升）。随后我用自建的 20 个贵州地点数据集压力测试
 泛化能力——包括光学卫星不可见的洞穴民居、以及外观酷似富裕郊区的易地搬迁村——并用 Grad-CAM
 验证模型确实聚焦于建筑密度。
 
@@ -66,9 +81,10 @@ Sentinel-2 RGB tiles for Nigeria, Malawi, Rwanda, Uganda and Tanzania. I
 benchmarked three pretrained backbones under identical training (AdamW, cosine
 schedule, bf16, early stopping) and got test r² of 0.65–0.69, with ConvNeXt-Tiny
 best. Crucially I ran a from-scratch ablation: the same ResNet-50 without
-ImageNet weights reaches a clearly lower r² and, more strikingly, needs ~10×
-more epochs to get there — which quantifies how much transfer learning buys you
-on small data, especially in convergence speed.
+ImageNet weights lands a little lower (0.62 vs 0.65) and, more tellingly, only
+reaches its best around epoch 51 versus epoch 14 for the pretrained model — so on
+small data the main thing transfer learning buys is much faster, more stable
+convergence rather than a big final-accuracy gap.
 
 Second, the transfer study. I hand-curated 20 Guizhou locations with an
 adversarial design — places chosen to break optical poverty mapping. Applying
@@ -92,8 +108,9 @@ PyTorch 从零重建了这条管线，并把它推向我关心的研究方向：
 第一步是非洲模型。我从尼日利亚、马拉维、卢旺达、乌干达、坦桑尼亚的 Sentinel-2 RGB 图块回归
 连续的 DHS 财富指数。在完全相同的训练设置（AdamW、cosine 调度、bf16、早停）下对比三个预训练
 backbone，test r² 在 0.65–0.69 之间，ConvNeXt-Tiny 最好。关键是我做了从零训练的消融：同样的
-ResNet-50 去掉 ImageNet 权重后 r² 明显更低，更突出的是要多花约 10 倍的 epoch 才能到达——
-这量化了小数据上迁移学习的价值，尤其在收敛速度上。
+ResNet-50 去掉 ImageNet 权重后 r² 略低（0.62 vs 0.65），更说明问题的是它要到约第 51 个 epoch 才
+到达最佳，而预训练模型在第 14 个 epoch 就到了——所以在小数据上，迁移学习主要带来更快、更稳的收敛，
+而非巨大的最终精度差。
 
 第二步是迁移研究。我手工构建了 20 个贵州地点，采用对抗性设计——专门挑选会让光学贫困识别失效
 的地方。把非洲训练的模型零微调地用上去，它能稳定区分发达与贫困区域：在 8 个 seed + 对 20 个点
@@ -160,7 +177,7 @@ and understanding *when that transfer holds and when it breaks*.
 |---|---|---|
 | Best Africa model (ConvNeXt-Tiny) | test r² **0.692**, RMSE 0.503 | strong in-domain regression of a continuous wealth index · 对连续财富指数的强域内回归 |
 | In-domain edge (paired, 8 seeds) | ConvNeXt − ResNet-50 Δr²=+0.025, 95% CI [0.012, 0.038], p=0.003, 8/8 | ConvNeXt is *significantly* better in-domain (small but real) · ConvNeXt 域内显著更好（小而真实） |
-| Transfer-learning ablation (same ResNet-50) | pretrained 0.651 vs from-scratch 0.615, ~10× faster convergence | pretraining's main win on small data is convergence speed/stability · 小数据上预训练主要赢在收敛速度/稳定性 |
+| Transfer-learning ablation (same ResNet-50) | pretrained 0.651 (best ep 14) vs from-scratch 0.615 (best ep 51) | pretraining's main win on small data is convergence speed/stability, not a big accuracy gap · 小数据上预训练主要赢在收敛速度/稳定性，而非巨大精度差 |
 | Africa→China zero-shot (8 seeds + bootstrap) | gap ResNet-50 1.18 [1.03,1.33], ConvNeXt 1.08 [0.99,1.16] | transfer is robust: both CIs well clear of 0 · 迁移稳健：两条 CI 都明显大于 0 |
 | In-domain ≠ transfer advantage | paired Δgap +0.10, 95% CI **[−0.05, +0.25]** (incl. 0), p=0.15 | the in-domain winner is **not** a better transferrer — they tie; the single-seed "1.49 vs 1.13" did not replicate · 域内赢家迁移上并不更好——打平；单 seed 的 "1.49 vs 1.13" 未能复现 |
 | Adversarial cases (representative model) | cave −0.05, relocation 0.12 | model resists the two designed traps · 模型抵住了两个设计陷阱 |
@@ -200,16 +217,18 @@ seed 差异**没能**通过复现，所以我报告的是稳健结论（迁移�
 
 ## 7. STAR stories (behavioral interviews) · STAR 行为故事
 
-**Story A — Making a non-learning model work (transfer learning).**
-- **S/T:** A from-scratch CNN on only ~2k labelled tiles barely learned the
-  regression. I needed usable accuracy without more labels.
-- **A:** I diagnosed it as a small-data problem rather than a tuning problem,
-  switched to ImageNet-pretrained backbones, and built a controlled ablation to
-  *prove* the effect rather than assume it.
-- **R:** Test r² jumped from ~half to ~0.69; I could state the value of
-  pretraining quantitatively.
-- **中文:** ~2k 张图上从零训练的 CNN 几乎学不动；我判断这是小数据问题而非调参问题，改用
-  ImageNet 预训练并设计消融来**证明**效果，r² 从约一半提升到 ~0.69，并能定量说明预训练的价值。
+**Story A — Quantifying transfer learning with a controlled ablation.**
+- **S/T:** I needed the best accuracy I could get from only ~2k labelled tiles,
+  and wanted to *know* (not assume) how much ImageNet pretraining actually helps.
+- **A:** I ran the same ResNet-50 with and without pretrained weights under
+  identical training, holding the data split fixed.
+- **R:** Pretraining gave a modest final-accuracy gain (test r² 0.65 vs 0.62) but
+  a large convergence gain — it reached its best by epoch 14 vs epoch 51 — so I
+  could recommend pretraining on evidence and characterise *why* it helps.
+- **中文:** 我想在仅 ~2k 张图上拿到最好的精度，并且要*知道*（而非假设）ImageNet 预训练到底帮多少。
+  于是在固定数据划分、相同训练设置下，对同一个 ResNet-50 做了"有/无预训练"消融。结果：预训练带来
+  小幅最终精度提升（test r² 0.65 vs 0.62），但收敛优势很大——第 14 个 epoch 就到最佳，而从零要到
+  第 51 个——于是我能基于证据推荐预训练，并讲清它*为什么*有用。
 
 **Story B — Replicating my own suggestive result instead of shipping it.**
 - **S/T:** A single seed showed the Africa→China transfer gap was larger for
@@ -239,14 +258,6 @@ seed 差异**没能**通过复现，所以我报告的是稳健结论（迁移�
 - **中文:** 在没有现成 wheel 的 ARM64 Grace-Blackwell、且与他人共享的 GPU 上训练；我搭好
   sm_121 的 CUDA-12.8 PyTorch、用 bf16+小 batch 与他人共存、启动前先看显存、并写了 HPC
   (SGE/qsub) 退路脚本，最终在不打扰共享用户的前提下完成可复现的多 backbone 训练。
-
-**Story D — Choosing the honest result over the flattering one.**
-- **S/T:** The best-accuracy model wasn't the best at transfer.
-- **A:** I reported the discrepancy explicitly rather than cherry-picking the
-  headline model for every figure.
-- **R:** A more credible, decision-useful conclusion about deployment.
-- **中文:** 精度最高的模型并非迁移最好的；我明确报告了这个矛盾，而非为每张图都挑那个最亮眼的
-  模型，从而得到对部署更可信、更有决策价值的结论。
 
 ---
 

@@ -35,11 +35,12 @@ extension of Yeh et al. (2020, *Nature Communications*); see
 **Two headline findings**
 
 1. **Transfer learning helps — most visibly in convergence.** With only ~2k
-   labelled tiles, an ImageNet-pretrained ResNet-50 reaches r²≈0.6 within ~5
-   epochs and tops out at **0.65**; the *same* architecture trained from scratch
-   takes ~50 epochs to reach 0.615. The final-accuracy edge is modest (+0.04 r²),
-   but pretraining converges **~10× faster** and far more stably — a nuanced,
-   honest result rather than a "pretraining doubles accuracy" cliché.
+   labelled tiles, an ImageNet-pretrained ResNet-50 reaches its best by epoch 14
+   and tops out at test r²=**0.65**; the *same* architecture from scratch only
+   gets there around epoch 51 and lands a little lower (**0.615**). So the
+   final-accuracy gap is modest (+0.04 r²) — the real win is much faster, more
+   stable convergence (see the ablation curve). From-scratch is not a failure
+   here; pretraining is just a clearly better use of the same data.
 
    ![Ablation](reports/figures/01_pretrain_vs_scratch.png)
 2. **Africa→China zero-shot transfer is robust — and architecture-insensitive.**
