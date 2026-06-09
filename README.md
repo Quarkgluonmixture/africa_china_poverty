@@ -152,6 +152,37 @@ python scripts/gradcam_china.py  --ckpt outputs/resnet50/best.pt --backbone resn
 python scripts/train.py --config configs/resnet50.yaml --split country_holdout --holdout-country NG
 ```
 
+## Pretrained checkpoints
+
+Download the trained weights from the [**v1.0 release**](https://github.com/Quarkgluonmixture/africa_china_poverty/releases/tag/v1.0):
+
+| Checkpoint | Backbone | Test r² | Download |
+|---|---|---:|---|
+| ConvNeXt-Tiny | best model | **0.692** | [`convnext_tiny.pt`](https://github.com/Quarkgluonmixture/africa_china_poverty/releases/download/v1.0/convnext_tiny.pt) (107 MB) |
+| ViT-S/16 | — | 0.687 | [`vit_small.pt`](https://github.com/Quarkgluonmixture/africa_china_poverty/releases/download/v1.0/vit_small.pt) (83 MB) |
+| ResNet-50 | used in China demos | 0.651 | [`resnet50.pt`](https://github.com/Quarkgluonmixture/africa_china_poverty/releases/download/v1.0/resnet50.pt) (90 MB) |
+
+Each `.pt` bundles the `state_dict`, training metadata and the target `scaler`
+(`mean`/`std`); checksums in [`SHA256SUMS.txt`](https://github.com/Quarkgluonmixture/africa_china_poverty/releases/download/v1.0/SHA256SUMS.txt).
+
+```bash
+# example: zero-shot China inference with the best model, no training needed
+curl -L -o convnext_tiny.pt \
+  https://github.com/Quarkgluonmixture/africa_china_poverty/releases/download/v1.0/convnext_tiny.pt
+python scripts/predict_china.py --ckpt convnext_tiny.pt --backbone convnext_tiny
+```
+
+```python
+import torch
+from acp.models import build_model        # src/acp on PYTHONPATH
+from acp.utils import TargetScaler
+
+ck = torch.load("convnext_tiny.pt", map_location="cpu", weights_only=False)
+model = build_model("convnext_tiny", pretrained=False)
+model.load_state_dict(ck["model"]); model.eval()
+scaler = TargetScaler(**ck["scaler"])     # scaler.inverse(pred) -> wealth index
+```
+
 ---
 
 ## Skills demonstrated
