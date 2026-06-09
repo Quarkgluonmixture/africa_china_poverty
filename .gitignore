@@ -1,0 +1,27 @@
+# Environments
+poverty_env/
+.conda/
+*.egg-info/
+
+# Large data & downloads (provide a download script instead of committing)
+data/
+china_images/
+china_dataset_final/
+*.tfrecord
+
+# Training artifacts (checkpoints, per-run outputs)
+checkpoints/
+outputs/
+logs/
+*.pt
+*.pth
+*.ckpt
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints
+.DS_Store
+
+# Curated figures for the README/report are kept under reports/figures/ (tracked).
+!reports/figures/

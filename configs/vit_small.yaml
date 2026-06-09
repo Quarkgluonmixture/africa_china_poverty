@@ -1,0 +1,14 @@
+# ViT-Small/16 (ImageNet-pretrained) — transformer backbone for comparison.
+backbone: vit_small_patch16_224
+pretrained: true
+img_size: 224
+batch_size: 64
+epochs: 50
+lr: 1.0e-4
+weight_decay: 0.05
+warmup_epochs: 5
+drop_rate: 0.1
+patience: 12
+split: random
+seed: 42
+run_name: vit_small

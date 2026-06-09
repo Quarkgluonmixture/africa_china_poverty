@@ -1,0 +1,14 @@
+# ConvNeXt-Tiny (ImageNet-pretrained) — modern CNN, strong accuracy/params trade-off.
+backbone: convnext_tiny
+pretrained: true
+img_size: 224
+batch_size: 64
+epochs: 50
+lr: 2.0e-4
+weight_decay: 0.05
+warmup_epochs: 3
+drop_rate: 0.3
+patience: 12
+split: random
+seed: 42
+run_name: convnext_tiny

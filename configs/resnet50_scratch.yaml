@@ -1,0 +1,15 @@
+# Ablation: ResNet-50 trained FROM SCRATCH (no ImageNet weights).
+# Isolates the contribution of transfer learning vs. the from-scratch baseline.
+backbone: resnet50
+pretrained: false          # <-- the ablation variable
+img_size: 224
+batch_size: 64
+epochs: 60
+lr: 1.0e-3                  # higher LR is appropriate when training from scratch
+weight_decay: 0.05
+warmup_epochs: 5
+drop_rate: 0.2
+patience: 15
+split: random
+seed: 42
+run_name: resnet50_scratch

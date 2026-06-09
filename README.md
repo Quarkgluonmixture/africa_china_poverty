@@ -1,0 +1,172 @@
+# Satellite Poverty Mapping & Cross-Continent Transfer
+
+**Predicting local economic well-being from RGB satellite imagery with
+ImageNet-pretrained CNNs/transformers — and testing whether a model trained only
+on Africa can be transferred *zero-shot* to rural China.**
+
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.x%20%2B%20timm-EE4C2C?logo=pytorch&logoColor=white)
+![CUDA](https://img.shields.io/badge/CUDA-Blackwell%20sm__121-76B900?logo=nvidia&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
+
+A deep-learning study that regresses a continuous **wealth index** from
+Sentinel-2 tiles over five African countries, compares three modern backbones,
+isolates the effect of transfer learning with an ablation, and then probes
+**out-of-distribution generalization** on a purpose-built, adversarial dataset
+of 20 locations in **Guizhou, China**. Built as a PyTorch reimplementation and
+extension of Yeh et al. (2020, *Nature Communications*); see
+[ATTRIBUTION.md](ATTRIBUTION.md).
+
+---
+
+## Results at a glance
+
+| Backbone | Pretraining | Test R² | Test r² (Pearson) | RMSE |
+|---|---|---:|---:|---:|
+| ResNet-50 | from scratch (ablation) | 0.614 | 0.615 | 0.560 |
+| ResNet-50 | ImageNet | 0.650 | 0.651 | 0.534 |
+| ViT-S/16 | ImageNet | 0.683 | 0.687 | 0.507 |
+| **ConvNeXt-Tiny** | ImageNet | **0.689** | **0.692** | **0.503** |
+
+*In-country split, held-out test set. Reproduce with `bash scripts/run_all.sh`.*
+
+![Model comparison](reports/figures/05_model_comparison.png)
+
+**Two headline findings**
+
+1. **Transfer learning helps — most visibly in convergence.** With only ~2k
+   labelled tiles, an ImageNet-pretrained ResNet-50 reaches r²≈0.6 within ~5
+   epochs and tops out at **0.65**; the *same* architecture trained from scratch
+   takes ~50 epochs to reach 0.615. The final-accuracy edge is modest (+0.04 r²),
+   but pretraining converges **~10× faster** and far more stably — a nuanced,
+   honest result rather than a "pretraining doubles accuracy" cliché.
+
+   ![Ablation](reports/figures/01_pretrain_vs_scratch.png)
+2. **Africa→China zero-shot transfer works, but in-domain accuracy ≠ transfer
+   robustness.** Applied with *no* fine-tuning to Guizhou, the Africa-trained
+   ResNet-50 separates developed vs. poor locations with a predicted-wealth
+   **gap of 1.49**; the *best* in-domain model (ConvNeXt) transfers with a
+   **smaller** gap (1.13). A genuinely useful negative result.
+
+---
+
+## Africa → China zero-shot transfer
+
+The model never sees a Chinese label. The 20 Guizhou tiles
+([`china/china_coordinates.csv`](china/china_coordinates.csv)) are deliberately
+adversarial — they target the failure modes of optical poverty mapping:
+
+| Location | Truth | Pred | Why it is hard |
+|---|---|---:|---|
+| Ziyun Zhongdong **cave dwelling** | poor | **−0.05** | poverty literally invisible to optical satellites → still ranked lowest |
+| Qianxi Huawu **relocation site** | poor | **0.12** | white-walled resettlement that mimics a wealthy suburb → not fooled |
+| Guiyang Huaguoyuan "**White House**" | developed | **0.92** | ultra-dense vernacular housing the model *under-rates* → honest failure case |
+| Guiyang Hunter Mall / Jiaxiu skyline | developed | **≈2.4** | dense built-up urban core → ranked highest |
+
+![China zero-shot](reports/figures/03_china_zeroshot_boxplot.png)
+
+### Interpretability — Grad-CAM on a trained model
+
+Gradient-weighted class activation maps w.r.t. the scalar wealth prediction. On
+urban tiles the attention concentrates on built-up structures (the airport
+terminal, CBD towers, the government complex); on rural tiles it is diffuse —
+evidence the network keys on man-made density rather than terrain.
+
+![Grad-CAM](reports/figures/04_gradcam_guizhou.png)
+
+---
+
+## Method
+
+```
+Sentinel-2 RGB tile ─▶ ImageNet-pretrained backbone (timm) ─▶ linear head ─▶ wealth index (ŷ)
+                         resnet50 / convnext_tiny / vit_small
+```
+
+- **Task.** Single-output regression of the DHS asset-based wealth index;
+  optimised with MSE on a standardised target, all metrics reported back in
+  original units.
+- **Data.** ~2k geolocated clusters across Nigeria, Malawi, Rwanda, Uganda,
+  Tanzania; ImageNet-style augmentation (random resized crop, flips, colour
+  jitter).
+- **Evaluation.** Country-stratified in-country split, plus an optional
+  **leave-one-country-out** protocol (`--split country_holdout`) for true
+  out-of-country generalization. Metrics: R², squared Pearson r² (the metric
+  used by the source paper), RMSE, MAE.
+- **Training.** AdamW + cosine schedule with linear warm-up, bf16 mixed
+  precision, early stopping on validation r²; fully seeded.
+
+![ConvNeXt training curve](reports/figures/02_convnext_training_curve.png)
+- **Compute.** Trained on an NVIDIA **GB10 (Grace-Blackwell, ARM64)** with a
+  PyTorch cu128 build; a UCL Myriad (SGE) batch script is included.
+
+---
+
+## Repository layout
+
+```
+src/acp/             # library
+  data.py            #   DHS dataset, country-stratified / leave-one-country-out splits, transforms
+  models.py          #   timm backbone factory + regression head
+  engine.py          #   train/eval loops, metrics, AMP, early stopping
+  gradcam.py         #   Grad-CAM for the regression head
+  utils.py           #   seeding, device, AMP dtype, target scaler
+configs/             # one YAML per experiment (resnet50 / convnext_tiny / vit_small / resnet50_scratch)
+scripts/
+  train.py           # train + evaluate one config -> outputs/<run>/
+  predict_china.py   # Africa-trained model -> 20 Guizhou tiles (zero-shot)
+  gradcam_china.py   # Grad-CAM overlays for the Guizhou tiles
+  compare_models.py  # aggregate test metrics -> comparison table + plot
+  plot_history.py    # re-plot a run's curve from history.csv
+  run_all.sh         # train all backbones + ablation, then compare
+  qsub_myriad.sh     # UCL Myriad (SGE) batch job
+  data_prep/         # Google Earth Engine download + DHS cleaning
+china/               # Guizhou coordinates + dataset-construction report
+reports/figures/     # committed figures used in this README
+```
+
+Data, checkpoints and per-run `outputs/` are git-ignored.
+
+## Setup
+
+```bash
+conda env create -f environment.yml && conda activate acp
+# Install the PyTorch build matching your GPU (see requirements.txt). On the
+# NVIDIA GB10 (Blackwell, ARM64) this was developed on:
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+pip install -r requirements.txt
+```
+
+**Data.** `data/clusters.csv` (`unique_id, cluster_id, wealth_index, LATNUM,
+LONGNUM, country`) + `data/images/{unique_id}.jpg`; the 20 Guizhou tiles in
+`china_dataset_final/`. Download/cleaning utilities live in `scripts/data_prep/`.
+
+## Reproduce
+
+```bash
+python scripts/smoke_test.py                                   # ~30s end-to-end sanity check
+bash scripts/run_all.sh                                        # train backbones + ablation, then compare
+python scripts/predict_china.py --ckpt outputs/resnet50/best.pt --backbone resnet50
+python scripts/gradcam_china.py  --ckpt outputs/resnet50/best.pt --backbone resnet50
+# True out-of-country generalization (train on 4 countries, test on the 5th):
+python scripts/train.py --config configs/resnet50.yaml --split country_holdout --holdout-country NG
+```
+
+---
+
+## Skills demonstrated
+
+**Research:** experimental design & ablation, cross-domain / zero-shot
+generalization, model interpretability (Grad-CAM), honest reporting of negative
+results, adversarial dataset construction.
+**ML engineering:** PyTorch + timm, modern training (AdamW/cosine/AMP/early
+stopping), reproducible config-driven experiments, multi-architecture
+benchmarking, GPU/HPC workflows (Blackwell, SGE/qsub).
+**Domain:** remote sensing, satellite imagery, socioeconomic prediction for
+sustainable-development applications.
+
+## License & attribution
+
+MIT (see [LICENSE](LICENSE)). Built on the `africa_poverty` research code
+(© 2022 Christopher Yeh); the PyTorch rebuild and the China transfer study are
+by Jiaming Wei. Full provenance in [ATTRIBUTION.md](ATTRIBUTION.md).

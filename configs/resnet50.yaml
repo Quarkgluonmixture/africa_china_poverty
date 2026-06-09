@@ -1,0 +1,15 @@
+# ResNet-50 baseline (ImageNet-pretrained). The honest counterpart to the old
+# from-scratch ResNet-18 that failed (Val R²≈0.045).
+backbone: resnet50
+pretrained: true
+img_size: 224
+batch_size: 64
+epochs: 50
+lr: 3.0e-4
+weight_decay: 0.05
+warmup_epochs: 3
+drop_rate: 0.2
+patience: 12
+split: random        # random (in-country) | country_holdout (out-of-country)
+seed: 42
+run_name: resnet50
