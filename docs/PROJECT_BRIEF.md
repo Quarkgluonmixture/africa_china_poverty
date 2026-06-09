@@ -72,11 +72,14 @@ on small data, especially in convergence speed.
 
 Second, the transfer study. I hand-curated 20 Guizhou locations with an
 adversarial design — places chosen to break optical poverty mapping. Applying
-the Africa-trained model with zero fine-tuning, it still separates developed
-from poor areas with a predicted-wealth gap of about 1.5. The interesting
-negative result: the best in-domain model (ConvNeXt) actually transfers with a
-*smaller* gap than ResNet-50 — in-domain accuracy isn't the same as transfer
-robustness, which matters if you deploy these models in new regions.
+the Africa-trained model with zero fine-tuning, it reliably separates developed
+from poor areas: across 8 seeds plus a bootstrap on the 20 tiles, the
+developed/poor gap is ~1.1 with 95% CIs well clear of 0 for both backbones. The
+methodologically interesting part: a single seed had suggested ResNet-50
+transferred noticeably better than the stronger in-domain model (ConvNeXt), but
+when I replicated it across 8 paired seeds the difference vanished (paired Δgap
+CI includes 0). So I reported the robust finding — transfer works and is
+architecture-insensitive at this scale — rather than the flashy single-seed one.
 
 Finally, interpretability: Grad-CAM on the trained model shows attention landing
 on airport terminals, CBD towers and dense housing for urban tiles, and staying
@@ -93,9 +96,11 @@ ResNet-50 去掉 ImageNet 权重后 r² 明显更低，更突出的是要多花�
 这量化了小数据上迁移学习的价值，尤其在收敛速度上。
 
 第二步是迁移研究。我手工构建了 20 个贵州地点，采用对抗性设计——专门挑选会让光学贫困识别失效
-的地方。把非洲训练的模型零微调地用上去，它仍能以约 1.5 的财富预测差距区分发达与贫困区域。
-有趣的 negative result 是：域内最好的模型（ConvNeXt）迁移时差距反而更小——域内精度不等于迁移
-鲁棒性，这在把模型部署到新区域时很重要。
+的地方。把非洲训练的模型零微调地用上去，它能稳定区分发达与贫困区域：在 8 个 seed + 对 20 个点
+的 bootstrap 下，发达/贫困差距约 1.1，两个 backbone 的 95% CI 都明显大于 0。方法论上最有意思的
+是：单个 seed 曾显示 ResNet-50 迁移得比域内更强的 ConvNeXt 明显更好，但我在 8 个配对 seed 上复现
+后，这个差异消失了（配对 Δgap 的 CI 包含 0）。所以我报告的是稳健的结论——迁移有效、且在此规模下
+对架构不敏感——而非那个抢眼但脆弱的单 seed 结果。
 
 最后是可解释性：训练后模型的 Grad-CAM 显示，城市图块的注意力落在机场航站楼、CBD 高楼和密集
 住宅上，乡村图块则保持弥散。整个项目都是配置驱动、可复现的；我在 ARM64 的 Grace-Blackwell
@@ -154,18 +159,24 @@ and understanding *when that transfer holds and when it breaks*.
 | Result | Number | Interpretation · 解读 |
 |---|---|---|
 | Best Africa model (ConvNeXt-Tiny) | test r² **0.692**, RMSE 0.503 | strong in-domain regression of a continuous wealth index · 对连续财富指数的强域内回归 |
-| Transfer-learning ablation (same ResNet-50) | pretrained 0.651 vs from-scratch 0.615, but ~10× faster convergence | pretraining's main win on small data is convergence speed/stability, not a huge accuracy gap · 小数据上预训练的主要优势是收敛速度/稳定性，而非巨大精度差 |
-| Africa→China zero-shot (ResNet-50) | rich/poor gap **1.49** | cross-continent signal survives with no fine-tuning · 跨大洲信号在零微调下仍成立 |
-| Transfer-robustness nuance | ConvNeXt gap 1.13 < ResNet-50 1.49 | best in-domain ≠ best transfer (negative result) · 域内最好≠迁移最好 |
-| Adversarial cases | cave −0.05, relocation 0.12 | model resists the two designed traps · 模型抵住了两个设计陷阱 |
+| In-domain edge (paired, 8 seeds) | ConvNeXt − ResNet-50 Δr²=+0.025, 95% CI [0.012, 0.038], p=0.003, 8/8 | ConvNeXt is *significantly* better in-domain (small but real) · ConvNeXt 域内显著更好（小而真实） |
+| Transfer-learning ablation (same ResNet-50) | pretrained 0.651 vs from-scratch 0.615, ~10× faster convergence | pretraining's main win on small data is convergence speed/stability · 小数据上预训练主要赢在收敛速度/稳定性 |
+| Africa→China zero-shot (8 seeds + bootstrap) | gap ResNet-50 1.18 [1.03,1.33], ConvNeXt 1.08 [0.99,1.16] | transfer is robust: both CIs well clear of 0 · 迁移稳健：两条 CI 都明显大于 0 |
+| In-domain ≠ transfer advantage | paired Δgap +0.10, 95% CI **[−0.05, +0.25]** (incl. 0), p=0.15 | the in-domain winner is **not** a better transferrer — they tie; the single-seed "1.49 vs 1.13" did not replicate · 域内赢家迁移上并不更好——打平；单 seed 的 "1.49 vs 1.13" 未能复现 |
+| Adversarial cases (representative model) | cave −0.05, relocation 0.12 | model resists the two designed traps · 模型抵住了两个设计陷阱 |
 
-**EN:** The story is coherent: pretraining matters most when data is scarce; the
-learned representation is general enough to cross continents; and the honest
-caveat — transfer robustness is not predicted by in-domain accuracy — is exactly
-the kind of finding that matters for real deployment.
+**EN:** The story is coherent and — importantly — honestly tested. Pretraining
+matters most when data is scarce (mainly convergence speed); the learned
+representation generalises across continents (robust positive gap under
+multi-seed + bootstrap); and a suggestive single-seed difference between
+architectures did **not** survive replication, so the reported conclusion is the
+robust one (transfer works, architecture-insensitive). Testing your own
+flattering result and reporting that it failed is the point.
 
-**中文:** 整个故事自洽：数据稀缺时预训练最关键；学到的表征足够通用以跨大洲；而那个诚实的
-注脚——迁移鲁棒性不能由域内精度预测——恰恰是真实部署时最该关心的发现。
+**中文:** 整个故事自洽，而且——关键是——经过了诚实检验。数据稀缺时预训练最关键（主要是收敛
+速度）；学到的表征能跨大洲泛化（多 seed + bootstrap 下稳健的正 gap）；而架构之间一个抢眼的单
+seed 差异**没能**通过复现，所以我报告的是稳健结论（迁移有效、对架构不敏感）。去检验自己那个好看
+的结果、并如实报告它不成立，正是要点所在。
 
 ---
 
@@ -181,7 +192,8 @@ the kind of finding that matters for real deployment.
 | CV / remote sensing | Sentinel-2 imagery, satellite tiles, geospatial reasoning |
 | Reproducible research | config-driven runs, seeding, committed figures, env spec |
 | GPU / HPC | Grace-Blackwell ARM64 training; SGE/qsub batch script |
-| Scientific communication | honest reporting incl. a negative result; clear README |
+| Statistical rigor | multi-seed paired t-tests, sign test, t- & bootstrap CIs; replicated a single-seed result and reported it didn't hold |
+| Scientific communication | honest reporting incl. a non-replication; clear README |
 | Data curation | original adversarial Guizhou dataset with documented rationale |
 
 ---
@@ -199,15 +211,22 @@ the kind of finding that matters for real deployment.
 - **中文:** ~2k 张图上从零训练的 CNN 几乎学不动；我判断这是小数据问题而非调参问题，改用
   ImageNet 预训练并设计消融来**证明**效果，r² 从约一半提升到 ~0.69，并能定量说明预训练的价值。
 
-**Story B — Designing an adversarial test instead of an easy one.**
-- **S/T:** Reporting one accuracy number is weak evidence of generalization.
-- **A:** I hand-built a 20-location Guizhou set targeting optical poverty-mapping
-  failure modes (cave dwellings, suburb-mimicking resettlement) and ran the
-  Africa model zero-shot.
-- **R:** A clear rich/poor gap (1.49) *and* an honest negative result (in-domain
-  ≠ transfer), which is more informative than a single score.
-- **中文:** 单一精度数字不足以证明泛化；我手工构建对抗性的 20 地点贵州集，专攻光学识别的失效
-  模式，零样本测试，得到清晰的贫富差距(1.49)与诚实的 negative result，比单一分数更有信息量。
+**Story B — Replicating my own suggestive result instead of shipping it.**
+- **S/T:** A single seed showed the Africa→China transfer gap was larger for
+  ResNet-50 (1.49) than for the stronger in-domain model ConvNeXt (1.13) — a
+  tempting "in-domain ≠ transfer" headline.
+- **A:** Instead of reporting it, I ran an 8-seed paired study (same split per
+  seed) plus a stratified bootstrap on the 20 China points, with paired t-tests
+  and a sign test.
+- **R:** The difference did **not** replicate (paired Δgap 95% CI [−0.05, +0.25],
+  includes 0). I reported the robust finding instead — transfer is reliable
+  (both gaps' CIs clear of 0) but architecture-insensitive — and corrected the
+  single-seed number. Testing my own flattering result is the takeaway.
+- **中文:** 单个 seed 显示 ResNet-50 的迁移 gap(1.49) 大于域内更强的 ConvNeXt(1.13)，很容易写成
+  "域内≠迁移"的抢眼结论。我没有直接报告，而是做了 8 seed 配对研究 + 对 20 个中国点的分层 bootstrap，
+  配上配对 t 检验与 sign test。结果该差异**未能复现**（配对 Δgap 95% CI [−0.05,+0.25] 含 0）。于是我
+  报告稳健结论——迁移可靠（两条 CI 都离 0 很远）但对架构不敏感——并更正了那个单 seed 数字。检验
+  自己好看的结果，才是要点。
 
 **Story C — Shipping on constrained, shared, bleeding-edge hardware.**
 - **S/T:** Train on an ARM64 Grace-Blackwell GPU (no off-the-shelf wheels) that
@@ -269,16 +288,18 @@ It's evidence, not proof — but consistent activation on built-up structures
 **EN:**
 - RGB-only; the source paper also uses nightlights/multispectral, which would
   likely raise accuracy.
-- The China set is small (20 points) — a qualitative stress test, not a
-  quantitative Chinese benchmark; next step is a larger labelled Chinese set.
-- In-country and leave-one-country-out are implemented; a full LOCO sweep across
-  all five countries would strengthen the generalization claim.
+- The China set is small (20 points). The transfer gap is multi-seed + bootstrap
+  CI'd (so the n=20 uncertainty is quantified, not ignored), but a larger
+  labelled Chinese benchmark is the natural next step.
+- Multi-seed (8) is done for ResNet-50 & ConvNeXt; extending the seed study to
+  ViT and a full leave-one-country-out sweep would broaden the claims further.
 - Wealth index is a proxy for assets, not income; interpret accordingly.
 
 **中文:**
 - 仅用 RGB；原文献还用了夜间灯光/多光谱，加入后精度可能更高。
-- 中国集很小（20 点）——是定性压力测试，而非定量的中国基准；后续应构建更大的中国标注集。
-- 已实现域内与留一国评估；对五国做完整 LOCO 扫描会进一步强化泛化结论。
+- 中国集很小（20 点）。迁移 gap 已用多 seed + bootstrap 给出 CI（n=20 的不确定性被量化而非忽略），
+  但更大的中国标注基准是自然的下一步。
+- 已对 ResNet-50 与 ConvNeXt 做了 8 seed；把 seed 研究扩到 ViT、并做完整留一国扫描会进一步拓宽结论。
 - 财富指数是资产的代理量，而非收入；解读时需注意。
 
 ---
@@ -286,9 +307,11 @@ It's evidence, not proof — but consistent activation on built-up structures
 ## 10. Tailoring guidance for the agent · 给 agent 的定制建议
 
 **EN:**
-- **Research Engineer / ML Research JD →** lead with the ablation, the zero-shot
-  transfer, the negative result, and Grad-CAM; frame as "designed and ran
-  controlled experiments to answer a generalization question."
+- **Research Engineer / ML Research JD →** lead with the ablation, the
+  multi-seed transfer study with paired tests + bootstrap CIs (and the
+  self-replication that corrected a single-seed result), and Grad-CAM; frame as
+  "designed and ran controlled, statistically tested experiments to answer a
+  generalization question — and reported what replicated, not what flattered."
 - **ML / DL Engineer JD →** lead with the PyTorch library design, config-driven
   reproducible pipeline, multi-backbone benchmarking, AMP/HPC, and clean repo.
 - **Data Scientist JD →** lead with problem framing, the wealth-index target,
@@ -315,13 +338,20 @@ It's evidence, not proof — but consistent activation on built-up structures
   Wealth index ≈ [−1.68, 4.73], mean ≈ 0.04, std ≈ 0.84.
 - **Split / 划分:** country-stratified ~70/15/15 → train 1,404 / val 301 / test 301;
   optional leave-one-country-out.
-- **Africa test results / 非洲测试结果 (held-out):**
+- **Africa test results / 非洲测试结果 (held-out, single representative seed):**
   ConvNeXt-Tiny r²=0.692 (R²=0.689, RMSE=0.503); ViT-S/16 r²=0.687 (R²=0.683);
   ResNet-50 r²=0.651 (R²=0.650); ResNet-50 from scratch r²=0.615 (R²=0.614,
   RMSE=0.560, best epoch 51 vs pretrained's epoch 14).
+- **Multi-seed (8 seeds, paired by split) / 多 seed（8 个，按 split 配对）:**
+  Africa r² — ResNet-50 0.653 [0.633,0.673], ConvNeXt 0.678 [0.648,0.709];
+  paired Δr² (ConvNeXt−ResNet) +0.025, 95% CI [0.012,0.038], p=0.003, 8/8 seeds
+  → ConvNeXt significantly better in-domain.
 - **China zero-shot / 中国零样本:** 20 tiles (10 developed, 10 poor).
-  ResNet-50 gap 1.49 (developed mean 1.835 vs poor 0.344); ConvNeXt gap 1.13.
-  Adversarial: Zhongdong cave −0.05, Huawu relocation 0.12.
+  Multi-seed gap — ResNet-50 1.18 [1.03,1.33], ConvNeXt 1.08 [0.99,1.16]
+  (hier-bootstrap lower bounds ≈0.78, both clear of 0). Paired Δgap +0.10,
+  95% CI [−0.05,+0.25], p=0.15 → architectures statistically tied on transfer
+  (the single-seed 1.49 vs 1.13 did NOT replicate). Representative-model
+  adversarial preds: Zhongdong cave −0.05, Huawu relocation 0.12.
 - **Backbones / 模型:** ResNet-50 (23.5M params), ConvNeXt-Tiny, ViT-S/16; all
   ImageNet-pretrained via `timm`; single linear regression head.
 - **Training / 训练:** AdamW, cosine schedule + warmup, bf16 AMP, dropout +

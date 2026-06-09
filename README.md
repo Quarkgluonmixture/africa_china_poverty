@@ -42,11 +42,17 @@ extension of Yeh et al. (2020, *Nature Communications*); see
    honest result rather than a "pretraining doubles accuracy" cliché.
 
    ![Ablation](reports/figures/01_pretrain_vs_scratch.png)
-2. **Africa→China zero-shot transfer works, but in-domain accuracy ≠ transfer
-   robustness.** Applied with *no* fine-tuning to Guizhou, the Africa-trained
-   ResNet-50 separates developed vs. poor locations with a predicted-wealth
-   **gap of 1.49**; the *best* in-domain model (ConvNeXt) transfers with a
-   **smaller** gap (1.13). A genuinely useful negative result.
+2. **Africa→China zero-shot transfer is robust — and architecture-insensitive.**
+   Tested over **8 paired seeds** + a stratified bootstrap on the 20 Guizhou
+   tiles, both backbones produce a clearly positive developed/poor gap with *no*
+   fine-tuning (ResNet-50 **1.18**, 95% CI [1.03, 1.33]; ConvNeXt **1.08**, [0.99,
+   1.16]; bootstrap lower bounds ≈0.78 — well clear of 0). ConvNeXt is
+   *significantly* better in-domain (paired Δr²=+0.025, p=0.003, 8/8 seeds), but
+   that edge does **not** carry to transfer (paired Δgap 95% CI [−0.05, +0.25],
+   includes 0). A single seed had hinted ResNet-50 transferred better (1.49 vs
+   1.13) — replication showed that was a seed artifact, not a real effect.
+
+   ![Transfer gap CI](reports/figures/06_transfer_gap_ci.png)
 
 ---
 
@@ -54,7 +60,9 @@ extension of Yeh et al. (2020, *Nature Communications*); see
 
 The model never sees a Chinese label. The 20 Guizhou tiles
 ([`china/china_coordinates.csv`](china/china_coordinates.csv)) are deliberately
-adversarial — they target the failure modes of optical poverty mapping:
+adversarial — they target the failure modes of optical poverty mapping.
+Representative per-tile predictions (one model; the *quantitative* claim is the
+multi-seed gap above):
 
 | Location | Truth | Pred | Why it is hard |
 |---|---|---:|---|
@@ -64,6 +72,11 @@ adversarial — they target the failure modes of optical poverty mapping:
 | Guiyang Hunter Mall / Jiaxiu skyline | developed | **≈2.4** | dense built-up urban core → ranked highest |
 
 ![China zero-shot](reports/figures/03_china_zeroshot_boxplot.png)
+
+Whether the in-domain ranking carries over to transfer is tested directly across
+seeds — the in-domain advantage does **not** translate into a transfer advantage:
+
+![In-domain vs transfer](reports/figures/07_indomain_vs_transfer.png)
 
 ### Interpretability — Grad-CAM on a trained model
 
@@ -150,6 +163,8 @@ python scripts/predict_china.py --ckpt outputs/resnet50/best.pt --backbone resne
 python scripts/gradcam_china.py  --ckpt outputs/resnet50/best.pt --backbone resnet50
 # True out-of-country generalization (train on 4 countries, test on the 5th):
 python scripts/train.py --config configs/resnet50.yaml --split country_holdout --holdout-country NG
+# Multi-seed transfer study + statistics (8 paired seeds, bootstrap CIs):
+bash scripts/seed_study.sh && python scripts/analyze_seed_study.py
 ```
 
 ## Pretrained checkpoints
@@ -187,9 +202,10 @@ scaler = TargetScaler(**ck["scaler"])     # scaler.inverse(pred) -> wealth index
 
 ## Skills demonstrated
 
-**Research:** experimental design & ablation, cross-domain / zero-shot
-generalization, model interpretability (Grad-CAM), honest reporting of negative
-results, adversarial dataset construction.
+**Research:** experimental design & ablation, **statistical rigor** (multi-seed
+paired tests, t- and bootstrap CIs, replicating a suggestive single-seed result
+and reporting that it did not hold), cross-domain / zero-shot generalization,
+model interpretability (Grad-CAM), adversarial dataset construction.
 **ML engineering:** PyTorch + timm, modern training (AdamW/cosine/AMP/early
 stopping), reproducible config-driven experiments, multi-architecture
 benchmarking, GPU/HPC workflows (Blackwell, SGE/qsub).
